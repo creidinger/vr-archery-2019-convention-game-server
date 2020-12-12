@@ -1,0 +1,85 @@
+---
+# File to config rasberry pis
+# you need to copy your ssh keys to the pi in order for this to work
+# ansible-playbook -i inventories/hosts -u pi config_rpi.yml
+- hosts: pis
+  become: yes
+  gather_facts: true
+
+
+  pre_tasks:
+    - name: Set Timezone to America/New_York
+      timezone:
+        name: America/New_York
+
+    - name: Install system packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - wget
+        - nano
+        - curl
+        - rsync
+        - vim
+        - git
+        - zip
+
+
+  # Some config borrowed from here:
+  # https://learn.adafruit.com/circuitpython-on-raspberrypi-linux/installing-circuitpython-on-raspberry-pi
+  tasks:
+    - name: Disable GUI and enable CLI auto-login
+      become: yes
+      command: raspi-config nonint do_boot_behaviour B2
+
+    - name: Enable I2C
+      become: yes
+      command: raspi-config nonint do_i2c 0
+
+    - name: Enable SPI
+      become: yes
+      command: raspi-config nonint do_spi 0
+
+    - name: Install python 3.7
+      apt:
+        name: python3
+        state: present
+
+    - name: Install RPI.GPIO
+      become: yes
+      command: pip3 install RPI.GPIO
+
+    - name: Install adafruit-blinka
+      become: yes
+      command: pip3 install adafruit-blinka
+
+    - name: Install pyfirmata
+      become: yes
+      command: pip3 install pyfirmata
+
+    - name: copy client.py to ~/
+      copy:
+        src: ../src/archer/__init__.py
+        dest: /home/pi/
+
+    - name: copy bow.py to ~/
+      copy:
+        src: ../src/archer/bow.py
+        dest: /home/pi/
+
+    - name: copy player.py to ~/
+      copy:
+        src: ../src/archer/player.py
+        dest: /home/pi/
+
+    - name: copy .bash_profile to ~/
+      copy:
+        src: .bash_profile
+        dest: /home/pi/
+
+
+  post_tasks:
+    - name: reboot PIs
+      reboot:

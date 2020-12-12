@@ -1,0 +1,27 @@
+---
+# File to send src files to pi
+# you need to copy your ssh keys to the pi in order for this to work
+# ansible-playbook -i inventories/hosts -u pi deploy.yml
+- hosts: pis
+  become: yes
+  gather_facts: false
+
+  tasks:
+    - name: copy __init__.py to ~/
+      copy:
+        src: ../src/archer/__init__.py
+        dest: /home/pi/
+
+    - name: copy bow.py to ~/
+      copy:
+        src: ../src/archer/bow.py
+        dest: /home/pi/
+
+    - name: copy player.py to ~/
+      copy:
+        src: ../src/archer/player.py
+        dest: /home/pi/
+
+  post_tasks:
+    - name: reboot PIs
+      reboot:
